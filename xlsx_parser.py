@@ -20,7 +20,7 @@ class TeamworkExcelParser:
 
     def get_valid_format(self):
         # excel_file =ExcelFile(self.file.file)
-        df = pandas.read_excel(self.file.file)
+        df = pandas.read_excel(self.file)
         self._group_tasks(df.to_dict(orient="records"))
         new_excel_data = pandas.DataFrame.from_records(self.output_data)
         output = BytesIO()
