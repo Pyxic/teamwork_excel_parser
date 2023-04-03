@@ -86,7 +86,7 @@ class TeamworkExcelParser:
             else:
                 new_row["hours"] += float(group_row["Decimal Hours"])
             new_row["estimated_hours"] = round(float(group_row["Estimated"])/60, 2) if group_row["Estimated"] else ""
-        new_row["hours"] = round(new_row["hours"], 2)
+        new_row["hours"] = new_row["hours"]
         return new_row
         
     def get_new_row_by_time(self, group_rows, first_part: bool = True):
