@@ -16,6 +16,10 @@ class TeamworkExcelParser:
         self.output_data = []
         self.first_part_data = []
         self.second_part_data = []
+
+    def highlight_value(self, s):
+        is_value = s == 'До 15 числа'
+        return ['font-weight: bold' if v else '' for v in is_value]
         
 
     def get_valid_format(self):
@@ -25,7 +29,14 @@ class TeamworkExcelParser:
         new_excel_data = pandas.DataFrame.from_records(self.output_data)
         output = BytesIO()
         writer = pandas.ExcelWriter(output, engine='xlsxwriter')
+
+        styler = new_excel_data.style
+
+        # Apply the bold format to cells with 'some value' in the 'description' column
+        styler.apply(lambda x: ['font-weight: bold' if v == 'До 15 числа' and i == 'description' else '' for i, v in
+                                zip(x.index, x)], axis=1)
         new_excel_data.to_excel(writer, sheet_name='sheetName', index=False, na_rep='NaN', header=True)
+        print(new_excel_data.loc[new_excel_data["description"].isin(['До 15 числа', 'После 15 числа'])].index)
         for column in new_excel_data:
             column_length = max(new_excel_data[column].astype(str).map(len).max(), len(column))
             col_idx = new_excel_data.columns.get_loc(column)
