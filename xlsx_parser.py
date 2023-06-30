@@ -72,18 +72,18 @@ class TeamworkExcelParser:
         self.first_part_data = sorted(self.first_part_data, key=lambda log: log["project"])
         self.second_part_data = sorted(self.second_part_data, key=lambda log: log["project"])
         
-        hours = sum([log["hours"] for log in self.output_data])
+        hours = round(sum([log["hours"] for log in self.output_data]), 2)
         self.output_data.append(dict(project="", task_link="", description="", hours=hours, estimated_hours=""))
         self.output_data.append(dict(project="", task_link="", description="", hours="", estimated_hours=""))
         self.output_data.append(dict(project="", task_link="", description="До 15 числа", hours="", estimated_hours=""))
         
         self.output_data.extend(self.first_part_data)
-        hours = sum([log["hours"] for log in self.first_part_data])
+        hours = round(sum([log["hours"] for log in self.first_part_data]), 2)
         self.output_data.append(dict(project="", task_link="", description="", hours=hours, estimated_hours=""))
         self.output_data.append(dict(project="", task_link="", description="", hours="", estimated_hours=""))
         self.output_data.append(dict(project="", task_link="", description="После 15 числа", hours="", estimated_hours=""))
         self.output_data.extend(self.second_part_data)
-        hours = sum([log["hours"] for log in self.second_part_data])
+        hours = round(sum([log["hours"] for log in self.second_part_data]), 2)
         self.output_data.append(dict(project="", task_link="", description="", hours=hours, estimated_hours=""))
 
     def get_new_row(self, group_rows):
