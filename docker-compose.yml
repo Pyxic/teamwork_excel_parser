@@ -1,4 +1,4 @@
-version: '3.7'
+version: '3.3'
 
 services:
   bot:
@@ -6,6 +6,7 @@ services:
       context: ./
       dockerfile: Dockerfile
     command: python bot.py
+    container_name: teamwork_parser_bot
     volumes:
       - .:/app:rw
     ports:
