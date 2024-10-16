@@ -1,3 +1,4 @@
+from datetime import datetime
 from io import StringIO, BytesIO
 from itertools import groupby
 from pprint import pprint
@@ -16,32 +17,41 @@ class TeamworkExcelParser:
         self.output_data = []
         self.first_part_data = []
         self.second_part_data = []
-        
 
     def get_valid_format(self):
-        # excel_file =ExcelFile(self.file.file)
-        df = pandas.read_excel(self.file)
+        # Читаем содержимое файла
+        contents = self.file.read()
+
+        # Используем BytesIO для создания потокового объекта из байтов
+        df = pandas.read_excel(BytesIO(contents))
+
+        # Продолжаем обработку данных
         self._group_tasks(df.to_dict(orient="records"))
         new_excel_data = pandas.DataFrame.from_records(self.output_data)
+
         output = BytesIO()
         writer = pandas.ExcelWriter(output, engine='xlsxwriter')
+
         new_excel_data.to_excel(writer, sheet_name='sheetName', index=False, na_rep='NaN', header=True)
+
         for column in new_excel_data:
             column_length = max(new_excel_data[column].astype(str).map(len).max(), len(column))
             col_idx = new_excel_data.columns.get_loc(column)
             writer.sheets['sheetName'].set_column(col_idx, col_idx, min(column_length, 50))
+
         writer.close()
+        output.seek(0)  # Сбрасываем указатель в начало файла
         return output
 
     @staticmethod
     def __key_func(k):
-        return k['Task Id']
+        return k['Task ID']
 
     def _group_tasks(self, data):
         # sort INFO data by 'company' key.
         data = sorted(data, key=self.__key_func)
-        first_part_data = [log for log in data if log["Date"].day <= 15]
-        second_part_data = [log for log in data if log["Date"].day > 15]
+        first_part_data = [log for log in data if datetime.strptime(log["Date"], "%m/%d/%Y").day <= 15]
+        second_part_data = [log for log in data if datetime.strptime(log["Date"], "%m/%d/%Y").day > 15]
 
         for key, value in groupby(data, self.__key_func):
             value = list(value)
@@ -79,13 +89,15 @@ class TeamworkExcelParser:
         new_row = {}
         for group_row in group_rows:
             new_row["project"] = group_row["Project"]
-            new_row["task_link"] = self.task_link + str(group_row["Task Id"])
+            new_row["task_link"] = self.task_link + str(group_row["Task ID"])
             new_row["description"] = group_row["Task"]
             if not new_row.get('hours'):
-                new_row["hours"] = float(group_row["Decimal Hours"])
+                print(group_row.keys())
+                new_row["hours"] = float(group_row["Decimal hours"])
             else:
-                new_row["hours"] += float(group_row["Decimal Hours"])
-            new_row["estimated_hours"] = round(float(group_row["Estimated"])/60, 2) if group_row["Estimated"] else ""
+                print(group_row)
+                new_row["hours"] += float(group_row["Decimal hours"])
+            new_row["estimated_hours"] = round(float(group_row["Estimated time"])/60, 2) if group_row["Estimated time"] else ""
         new_row["hours"] = new_row["hours"]
         return new_row
         
