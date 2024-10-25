@@ -74,8 +74,8 @@ class TeamworkExcelParser:
     def _group_tasks(self, data):
         # sort INFO data by 'company' key.
         data = sorted(data, key=self.__key_func)
-        first_part_data = [log for log in data if datetime.strptime(log["Date"], "%m/%d/%Y").day <= 15]
-        second_part_data = [log for log in data if datetime.strptime(log["Date"], "%m/%d/%Y").day > 15]
+        first_part_data = [log for log in data if log["Date"].day <= 15]
+        second_part_data = [log for log in data if log["Date"].day > 15]
 
         for key, value in groupby(data, self.__key_func):
             value = list(value)
