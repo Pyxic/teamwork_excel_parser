@@ -50,6 +50,28 @@ class TeamworkExcelParser:
             col_idx = new_excel_data.columns.get_loc(column)
             writer.sheets['sheetName'].set_column(col_idx, col_idx, min(column_length, 50))
 
+        # Create separate sheet per project (use tasks_only to avoid duplication)
+        projects_grouped = {}
+        for row in self.tasks_only:
+            proj = row["project"]
+            if proj not in projects_grouped:
+                projects_grouped[proj] = []
+            projects_grouped[proj].append({
+                "Задача": row["description"],
+                "Ссылка": row["task_link"],
+                "Оценка": row["estimated_hours"],
+                "Фактическое время": row["hours"],
+            })
+
+        for proj, rows in projects_grouped.items():
+            sheet_name = proj[:31].replace('/', '-').replace('\\', '-').replace('?', '').replace('*', '').replace('[', '').replace(']', '').replace(':', '')
+            proj_df = pandas.DataFrame.from_records(rows)
+            proj_df.to_excel(writer, sheet_name=sheet_name, index=False, na_rep='NaN', header=True)
+            for column in proj_df:
+                column_length = max(proj_df[column].astype(str).map(len).max(), len(column))
+                col_idx = proj_df.columns.get_loc(column)
+                writer.sheets[sheet_name].set_column(col_idx, col_idx, min(column_length, 60))
+
         writer.close()
         output.seek(0)  # Сбрасываем указатель в начало файла
         return output
@@ -94,9 +116,26 @@ class TeamworkExcelParser:
         self.output_data = sorted(self.output_data, key=lambda log: log["project"])
         self.first_part_data = sorted(self.first_part_data, key=lambda log: log["project"])
         self.second_part_data = sorted(self.second_part_data, key=lambda log: log["project"])
-        
+
+        # Save clean tasks list for project sheets (before appending summary/half-month rows)
+        self.tasks_only = list(self.output_data)
+
         hours = round(sum([log["hours"] for log in self.output_data]), 2)
         self.output_data.append(dict(project="", task_link="", description="", hours=hours, estimated_hours=""))
+
+        # Build project summary: project -> total hours
+        project_summary = {}
+        for log in self.tasks_only:
+            project_summary[log["project"]] = project_summary.get(log["project"], 0) + log["hours"]
+        self.project_summary = project_summary
+
+        self.output_data.append(dict(project="", task_link="", description="", hours="", estimated_hours=""))
+        self.output_data.append(dict(project="ПРОЕКТ", task_link="ИТОГО ЧАСОВ", description="", hours="", estimated_hours=""))
+        for proj, proj_hours in project_summary.items():
+            self.output_data.append(dict(project=proj, task_link=round(proj_hours, 2), description="", hours="", estimated_hours=""))
+        total_proj_hours = round(sum(project_summary.values()), 2)
+        self.output_data.append(dict(project="ИТОГО", task_link=total_proj_hours, description="", hours="", estimated_hours=""))
+
         self.output_data.append(dict(project="", task_link="", description="", hours="", estimated_hours=""))
         self.output_data.append(dict(project="", task_link="", description="До 15 числа", hours="", estimated_hours=""))
         

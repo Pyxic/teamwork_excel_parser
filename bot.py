@@ -1,12 +1,9 @@
 import asyncio
-import io
 import logging
-import os.path
 
-from aiogram.methods import GetFile
 from aiogram import Bot, Dispatcher, Router, types, F
 from aiogram.filters import Command
-from aiogram.types import Message, File, InputFile, BufferedInputFile
+from aiogram.types import Message, BufferedInputFile
 
 from config import BOT_TOKEN
 from xlsx_parser import TeamworkExcelParser
